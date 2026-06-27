@@ -1,0 +1,105 @@
+networks:
+  container-network:
+    name: container-network
+    ipam:
+      driver: default
+      config:
+        - subnet: 192.168.20.0/24
+          gateway: 192.168.20.1
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:latest
+    container_name: mosquitto
+    hostname: mosquitto
+    ports:
+      - "1883:1883"
+    restart: unless-stopped
+    volumes:
+      - ./simple-mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+    networks:
+      container-network:
+        ipv4_address: 192.168.20.2
+
+  iotdb:
+    image: apache/iotdb:latest
+    hostname: iotdb
+    container_name: iotdb
+    restart: always
+    ports:
+      - "6667:6667"
+      - "18080:18080"
+    environment:
+      - timestamp_precision=us
+      - cn_internal_address=iotdb
+      - cn_internal_port=10710
+      - cn_consensus_port=10720
+      - cn_seed_config_node=iotdb:10710
+      - dn_rpc_address=iotdb
+      - dn_internal_address=iotdb
+      - dn_rpc_port=6667
+      - dn_internal_port=10730
+      - dn_mpp_data_exchange_port=10740
+      - dn_schema_region_consensus_port=10750
+      - dn_data_region_consensus_port=10760
+      - dn_seed_config_node=iotdb:10710
+      - enable_rest_service=true
+    privileged: true
+    healthcheck:
+        test: ["CMD", "curl", "-f", "http://iotdb:18080/ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 20
+    volumes:
+        - iotdb:/iotdb
+        - ./twincat_data_collector/TwinCAT/StaticRoutes.xml:/etc/TwinCAT/3.1/Target/StaticRoutes.xml
+    networks:
+      container-network:
+        ipv4_address: 192.168.20.3
+
+  data_acquisition:
+    image: data_acquisition:latest
+    container_name: data_acquisition
+    restart: unless-stopped
+    hostname: data_acquisition
+    depends_on:
+      iotdb:
+        condition: service_healthy
+    privileged: true
+    environment:
+      - ROUTER_ADDRESS=localhost
+      - TARGET_AMSID=15.15.15.15.1.1
+      - MY_AMSID=192.168.20.20.1.1
+      - IOTDB_HOST=iotdb
+      - PCI_DEVICES=NONE
+    volumes:
+      - data_acquisition:/app
+      - /dev/hugepages:/dev/hugepages:rw
+      - ./twincat_data_collector/TwinCAT:/etc/TwinCAT/3.1/Target/Routes
+    networks:
+      container-network:
+        ipv4_address: 192.168.20.4
+
+  grafana:
+    image: grafana/grafana-enterprise
+    container_name: grafana
+    restart: unless-stopped
+    depends_on:
+      iotdb:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_PLUGINS_PREINSTALL=apache-iotdb-datasource@@https://grafana.com/api/plugins/apache-iotdb-datasource/versions/1.0.1/download
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      container-network:
+        ipv4_address: 192.168.20.5
+
+
+volumes:
+  data_acquisition: {}
+  iotdb: {}
+  grafana-storage: {}
