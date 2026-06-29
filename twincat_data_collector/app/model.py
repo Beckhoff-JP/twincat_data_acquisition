@@ -21,7 +21,7 @@ class BaseEventTask(IEventTask):
     ads_connection : AdsCommunication
     mapping_model : tuple = field(default_factory=tuple)
     watch_symbol : str = field(default_factory=str)
-    cancel_reconnect : bool = field(default_factory=bool)
+    reconnect : bool = field(default_factory=bool)
 
     def create_notification(self):
         self.event_handler = EventReporter(plc=self.ads_connection,
@@ -32,32 +32,29 @@ class BaseEventTask(IEventTask):
     async def observer_task(self):
         while True:
             if await self.observable():
-                self.cancel_reconnect = True
+                self.reconnect = False
 
     async def alive_check_task(self):
-        while True:
-            reconnect = False
-            try:
-               if self.ads_connection.connection.is_open:
-                    module_state = self.ads_connection.connection.read_state()
-                    print(f"Port {self.ads_connection.ads_port} : ADS State {module_state[0]}, Device state : {module_state[1]}")
-                    if not self.cancel_reconnect and (module_state[0] != 5 or module_state[1] != 0):
-                        print("Watch Dog Error")
-                        reconnect = True
-               else:
-                    print("Port closed")
-                    reconnect = True
-            except pyads.pyads_ex.ADSError as e:
-                print(f"ADSError : {e}")
-                reconnect = True
-
-            if reconnect:
-                print("Connection lost. Attempting to reconnect...")
+       while True:
+           if self.reconnect:
+                print(f"{self.watch_symbol} : Connection lost. Attempting to reconnect...")
                 self.ads_connection.port_close()
                 await asyncio.sleep(1)  # Wait before trying to reconnect
                 self.ads_connection.port_open()
-            self.cancel_reconnect = False
-            await asyncio.sleep(10)  # Check every 10 seconds
+           try:
+               if self.ads_connection.connection.is_open:
+                    module_state = self.ads_connection.connection.read_state()
+                    print(f"Port {self.ads_connection.ads_port} : ADS State {module_state[0]}, Device state : {module_state[1]}")
+                    if (module_state[0] != 5 or module_state[1] != 0):
+                        print(f"{self.watch_symbol} : Watch Dog Error")
+                        self.reconnect = True
+               else:
+                   print(f"{self.watch_symbol} : Could not open.")
+                   self.reconnect = True
+           except pyads.pyads_ex.ADSError as e:
+               print(f"{self.watch_symbol} : ADSError : {e}")
+               self.reconnect = True
+           await asyncio.sleep(10)  # Check every 10 seconds
 
 
 @dataclass
