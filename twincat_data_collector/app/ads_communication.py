@@ -15,6 +15,7 @@ class AbstructAdsDeviceNotification(ABC):
     connection: pyads.Connection
     symbol: str
     model: T
+    alive_report: callable
     queue: asyncio.Queue = field(default_factory=asyncio.Queue)
     subscriber: Callable = field(default=None)
     cycle_time : int = field(default=1)
@@ -60,6 +61,7 @@ class AdsDeviceNotificationStructure(AbstructAdsDeviceNotification):
             def callback(handle, name, timestamp, value):
                 timestamp = timestamp.replace(tzinfo=ZoneInfo("UTC"))
                 self.subscriber(timestamp, value)
+                self.alive_report()
             self.connection.add_device_notification(self.symbol,
                                         attr,
                                         callback)
@@ -87,7 +89,7 @@ class AdsDeviceNotificationPrimitive(AbstructAdsDeviceNotification):
             def callback(handle, name, timestamp, value):
                 timestamp = timestamp.replace(tzinfo=ZoneInfo("UTC"))
                 self.subscriber(timestamp, {name: value})
-
+                self.alive_report()
             self.connection.add_device_notification(self.symbol,
                                         attr,
                                         callback)
@@ -103,13 +105,21 @@ class AdsPortConnection:
     ads_port: int = field(default=851)
     connection: pyads.Connection = field(default=None, init=False)
     symbols: list = field(default_factory=list, init=False)
+    watchdog: bool = field(default=False, init=False)
     
-
     def __post_init__(self):
         self.publishers = list()
         print(f"Connecting to PLC with AMS ID: {self.ams_net_id}, Port: {self.ads_port}")
         self.connection = pyads.Connection(self.ams_net_id, self.ads_port)
         self.port_open()
+    
+    async def reconnect(self):
+        self.port_close()
+        await asyncio.sleep(1)  # Wait before trying to reconnect
+        self.port_open()
+    
+    def reconnect_nowait(self):
+        asyncio.create_task(self.reconnect())
     
     def port_open(self):
         try:
@@ -138,6 +148,7 @@ class AdsPortConnection:
             publisher = AdsDeviceNotificationStructure(
                     connection=self.connection,
                     model=model,
+                    alive_report=self.alive_report,
                     subscriber=subscriber,
                     symbol=symbol,
                     cycle_time=cycle_time
@@ -146,6 +157,7 @@ class AdsPortConnection:
             publisher = AdsDeviceNotificationPrimitive(
                     connection=self.connection,
                     model=model,
+                    alive_report=self.alive_report,
                     subscriber=subscriber,
                     symbol=symbol,
                     cycle_time=cycle_time
@@ -163,3 +175,25 @@ class AdsPortConnection:
 
     def disconnect(self):
         self.connection.close()
+
+    def alive_report(self):
+        self.watchdog = True
+        
+    async def alive_check_task(self):
+        while True:
+            try:
+                if not self.watchdog:
+                    print(f"Connection lost. Attempting to reconnect...")
+                    await self.reconnect()
+                if self.connection.is_open:
+                    module_state = self.connection.read_state()
+                    print(f"Port {self.ads_port} : ADS State {module_state[0]}, Device state : {module_state[1]}")
+                    if (module_state[0] != 5 or module_state[1] != 0):
+                        self.watchdog = False
+                else:
+                    print(f"Port {self.ads_port} : Could not open.")
+                    self.watchdog = False
+            except (pyads.pyads_ex.ADSError, AdsConnectionError) as e:
+                print(f"Port {self.ads_port} : ADSError : {e}")
+                self.watchdog = False
+            await asyncio.sleep(10)  # Check every 10 seconds

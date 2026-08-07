@@ -163,3 +163,20 @@ xplanar_scope_data = (
     ('MoverCommunicationData', pyads.PLCTYPE_LREAL, 6)
 )
 
+xts_motor_module_alarm_structure = (
+    ("timestamp", pyads.PLCTYPE_UDINT, 1), 
+    ("source", pyads.PLCTYPE_UINT, 1), 
+    ("code", pyads.PLCTYPE_UINT, 1)
+)
+
+xts_motor_module_latest_message = (
+    ("timestamp", pyads.PLCTYPE_UDINT, 1), 
+    ("type", pyads.PLCTYPE_UDINT, 1), 
+    ("message_id", pyads.PLCTYPE_UINT, 1),
+    ("acknowledged", pyads.PLCTYPE_BOOL, 1)
+)
+
+xts_motor_module_voltage_current = (
+    ("max_dc_link_voltage", pyads.PLCTYPE_LREAL, 1),
+    ("max_overall_current", pyads.PLCTYPE_LREAL, 1)
+ )

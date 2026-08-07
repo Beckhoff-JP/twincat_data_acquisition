@@ -124,7 +124,8 @@ class ADSEventWatchTaskManager:
                 chunk_size=chunk_size
             )
             cls.task_queue.put_nowait(event_task.observer_task())
-            cls.task_queue.put_nowait(event_task.alive_check_task())
+            if [p.subscriber for p in cls.factory.products].count(ads_port_connection) < 2:
+                cls.task_queue.put_nowait(ads_port_connection.alive_check_task())
             print(f"Event task created for symbol: {event_task.watch_symbol}")
         except pyads.pyads_ex.ADSError as e:
             print(f"Failed to create event task for symbol: {twincat_symbol}. Error: {e}")
@@ -135,8 +136,8 @@ class ADSEventWatchTaskManager:
             try:
                 async with asyncio.TaskGroup() as cls.tg:
                     while True:
-                        task = await cls.task_queue.get()
-                        cls.tg.create_task(task)
+                        callable = await cls.task_queue.get()
+                        cls.tg.create_task(callable)
             except Exception as e:
                 print(f"Error in task_run: {e}")
                 for task in cls.tg._tasks:

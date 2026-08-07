@@ -17,7 +17,6 @@ class EventTaskBase(ABC):
     subscriber : AdsPortConnection
     mapping_model : T
     watch_symbol : str
-    reconnect : bool = field(default_factory=bool)
     queue : asyncio.Queue = field(default=None)
 
     def __post_init__(self):
@@ -30,32 +29,8 @@ class EventTaskBase(ABC):
 
     async def observer_task(self):
         while True:
-            if await self.observer():
-                self.reconnect = False
-
-    async def alive_check_task(self):
-        while True:
-            try:
-                if self.reconnect:
-                    print(f"{self.watch_symbol} : Connection lost. Attempting to reconnect...")
-                    self.subscriber.port_close()
-                    await asyncio.sleep(1)  # Wait before trying to reconnect
-                    self.subscriber.port_open()
-                if self.subscriber.connection.is_open:
-                    module_state = self.subscriber.connection.read_state()
-                    print(f"Port {self.subscriber.ads_port} : ADS State {module_state[0]}, Device state : {module_state[1]}")
-                    if (module_state[0] != 5 or module_state[1] != 0):
-                        print(f"{self.watch_symbol} : Watch Dog Error")
-                        self.reconnect = True
-                else:
-                    print(f"{self.watch_symbol} : Could not open.")
-                    self.reconnect = True
-            except (pyads.pyads_ex.ADSError, AdsConnectionError) as e:
-                print(f"{self.watch_symbol} : ADSError : {e}")
-                self.reconnect = True
-            await asyncio.sleep(10)  # Check every 10 seconds
-
-
+            await self.observer()
+            
 @dataclass
 class IoTDBRecorder(EventTaskBase):
     time_series_manager : IoTTimeSeriesBase = field(default=None, init=True)
@@ -64,7 +39,7 @@ class IoTDBRecorder(EventTaskBase):
     def __post_init__(self):
         super().__post_init__()
 
-    async def observer(self):
+    async def observer(self) -> bool:
         data_count = 0
         while not self.queue.empty():
             data_count += 1
