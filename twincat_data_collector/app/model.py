@@ -45,8 +45,7 @@ class IoTDBRecorder(EventTaskBase):
             data_count += 1
             record = await self.queue.get()
             record["timestamp"] = record["timestamp"].astimezone(ZoneInfo("Japan"))
-            new_record = {i: record[i] for i in record if isinstance(record[i], (int, float, bool, str, datetime))}
-            if self.time_series_manager.write_data(new_record):
+            if self.time_series_manager.write_data(record):
                 break
         print(f"{self.watch_symbol} data write count : {data_count}/{self.time_series_manager.chunk_size}")
         if  self.queue.qsize() > 0:
