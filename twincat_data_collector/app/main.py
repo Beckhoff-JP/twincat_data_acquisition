@@ -1,3 +1,4 @@
+import logging
 from task_factory import ADSEventWatchTaskManager
 from ads_communication import AdsPortConnection
 from iotdb_utils import IoTDBClientSession
@@ -7,7 +8,7 @@ import pyads
 import os
 
 
-ams_net_id = os.getenv('TARGET_AMSID', default='15.15.15.15.1.1')
+ams_net_id = os.getenv('TARGET_AMSID', default='199.4.42.250.1.1')
 router = os.getenv('ROUTER_ADDRESS', default='127.0.0.1')
 
 try:
@@ -48,11 +49,11 @@ try:
         chunk_size=500
     )
 except AdsConnectionError as e:
-    print(e)
+    logging.info(e)
     exit(1)
 
 except IoTDBConnectionError as e:
-    print(e)
+    logging.info(e)
     exit(1)
 
 ADSEventWatchTaskManager.task_run()

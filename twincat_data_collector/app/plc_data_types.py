@@ -1,21 +1,5 @@
 import pyads
 
-xts_mover_controller_scope_variable = (
-    ("ActHwPos", pyads.PLCTYPE_LREAL, 1),
-    ("ActPos", pyads.PLCTYPE_LREAL, 1),
-    ("ActPosError", pyads.PLCTYPE_LREAL, 1),
-    ("ActVelo", pyads.PLCTYPE_LREAL, 1),
-    ("ActVeloError", pyads.PLCTYPE_LREAL, 1),
-    ("Control", pyads.PLCTYPE_UINT, 1),
-    ("SetAccItp", pyads.PLCTYPE_LREAL, 1),
-    ("SetCurr", pyads.PLCTYPE_LREAL, 1),
-    ("SetForce", pyads.PLCTYPE_LREAL, 1),
-    ("SetJerkItp", pyads.PLCTYPE_LREAL, 1),
-    ("SetPosItp", pyads.PLCTYPE_LREAL, 1),
-    ("SetVeloItp", pyads.PLCTYPE_LREAL, 1),
-    ("Status", pyads.PLCTYPE_UINT, 1)
-)
-
 tc_mc3_actdata = (
     ('ActDCTimeStamp', pyads.PLCTYPE_ULINT, 1),
     ("ActPartPosition", pyads.PLCTYPE_LREAL, 1),
@@ -163,14 +147,67 @@ xplanar_scope_data = (
     ('MoverCommunicationData', pyads.PLCTYPE_LREAL, 6)
 )
 
+xts_mover_controller = (
+    ("ActPosition", pyads.PLCTYPE_LREAL, 1),
+    ("ActPositionError", pyads.PLCTYPE_LREAL, 1),
+    ("ActVelocity", pyads.PLCTYPE_LREAL, 1),
+    ("ActVelocityError", pyads.PLCTYPE_LREAL, 1),
+    ("AutomaticLocalInitAddress", pyads.PLCTYPE_USINT, 1),
+    ("DistanceDriven", pyads.PLCTYPE_LREAL, 1),
+    ("DistanceDrivenInKm", pyads.PLCTYPE_LREAL, 1),
+    ("DriveControlInfo",(
+        ("SwitchOn", pyads.PLCTYPE_BOOL,1),
+        ("EnableVoltage", pyads.PLCTYPE_BOOL,1),
+        ("QuickStop", pyads.PLCTYPE_BOOL,1),
+        ("EnableOperation", pyads.PLCTYPE_BOOL,1),
+        ("FaultReset", pyads.PLCTYPE_BOOL,1),
+        ("Halt", pyads.PLCTYPE_BOOL,1)
+        ),1),
+    ("DeviceStatus",pyads.PLCTYPE_UDINT,1),
+    ("DriveStatusInfo",(
+        ("ReadyToSwitchOn", pyads.PLCTYPE_BOOL,1),
+        ("SwitchedOn", pyads.PLCTYPE_BOOL,1),
+        ("Fault", pyads.PLCTYPE_BOOL,1),
+        ("VoltageEnabled", pyads.PLCTYPE_BOOL,1),
+        ("QuickStop", pyads.PLCTYPE_BOOL,1),
+        ("SwitchOnDisabled", pyads.PLCTYPE_BOOL,1),
+        ("Warning", pyads.PLCTYPE_BOOL,1),
+        ("InternalLimitActive", pyads.PLCTYPE_BOOL,1),
+        ("FollowsCommandValues", pyads.PLCTYPE_BOOL,1)
+        ),1),
+    ("IsActive", pyads.PLCTYPE_BOOL,1),
+    ("IsFrozen", pyads.PLCTYPE_BOOL,1),
+    ("IsLost", pyads.PLCTYPE_BOOL,1),
+    ("IsMover1", pyads.PLCTYPE_BOOL,1),
+    ("IsReadyForProcessing", pyads.PLCTYPE_BOOL,1),
+    ("LinkedNctBaseUnitInterfaceObjectId", pyads.PLCTYPE_UDINT,1),
+    ("MoverControllerError", pyads.PLCTYPE_UINT,1),
+    ("PositionInfo",(
+        ("partPosition", pyads.PLCTYPE_LREAL,1),
+        ("trackPosition", pyads.PLCTYPE_LREAL,1),
+        ("partObjectId", pyads.PLCTYPE_UDINT,1),
+        ("trackObjectId", pyads.PLCTYPE_UDINT,1)
+        ),1),
+    ("SetAcceleration", pyads.PLCTYPE_LREAL, 1),
+    ("SetCurrent", pyads.PLCTYPE_LREAL, 1),
+    ("SetForce", pyads.PLCTYPE_LREAL, 1),
+    ("SetVelocity", pyads.PLCTYPE_LREAL, 1),
+    ("Version",(
+        ("Major", pyads.PLCTYPE_UDINT,1),
+        ("Minor", pyads.PLCTYPE_UDINT,1),
+        ("Build", pyads.PLCTYPE_UDINT,1),
+        ("Revision", pyads.PLCTYPE_UDINT,1)
+        ),1)
+)
+
 xts_motor_module_alarm_structure = (
-    ("timestamp", pyads.PLCTYPE_UDINT, 1), 
+#    ("timestamp", pyads.PLCTYPE_UDINT, 1), 
     ("source", pyads.PLCTYPE_UINT, 1), 
     ("code", pyads.PLCTYPE_UINT, 1)
 )
 
 xts_motor_module_latest_message = (
-    ("timestamp", pyads.PLCTYPE_UDINT, 1), 
+#    ("timestamp", pyads.PLCTYPE_UDINT, 1), 
     ("type", pyads.PLCTYPE_UDINT, 1), 
     ("message_id", pyads.PLCTYPE_UINT, 1),
     ("acknowledged", pyads.PLCTYPE_BOOL, 1)

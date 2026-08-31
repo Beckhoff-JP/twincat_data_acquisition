@@ -1,3 +1,4 @@
+import logging
 import numpy as np
 from iotdb.Session import Session
 from iotdb.SessionPool import PoolConfig, SessionPool
@@ -53,7 +54,7 @@ class IoTDBClientSession:
             time_zone=f"UTC{offset:+d}",
             enable_redirection=True
         )
-        self.session_pool = SessionPool(pool_config, max_pool_size=5, wait_timeout_in_ms=3000)
+        self.session_pool = SessionPool(pool_config, max_pool_size=20, wait_timeout_in_ms=3000)
         
     def close(self):
         if self.session is not None:
@@ -72,7 +73,7 @@ class SessionManagement:
                 func(self,  session, *args, **kwargs)
                 self.session_manager.session_pool.put_back(session)
             except IoTDBConnectionException as e:
-                print(f"Connection failed for {self.session_manager.host}:{self.session_manager.port}: {e}")
+                logging.info(f"Connection failed for {self.session_manager.host}:{self.session_manager.port}: {e}")
                 raise IoTDBConnectionError("Failed to connect to IoTDB") from e
         return wrapper
 
@@ -176,9 +177,9 @@ class MultiTimeSeries(IoTTimeSeriesBase):
                 )
             else:
                 raise ValueError("plc_data_model must be a tuple of tuples for MultiTimeSeries")
-            print(f"Created aligned time series: {self.storage_group_name}.{self.time_series_name} with measurements {self.measurements_list}")
+            logging.info(f"Created aligned time series: {self.storage_group_name}.{self.time_series_name} with measurements {self.measurements_list}")
         except StatementExecutionException as e:
-            print(f"Time series already exists: {self.storage_group_name}.{self.time_series_name}")
+            logging.info(f"Time series already exists: {self.storage_group_name}.{self.time_series_name}")
         
     @SessionManagement.session
     def insert_data(self, session : Session):
@@ -192,6 +193,8 @@ class MultiTimeSeries(IoTTimeSeriesBase):
             measurements_name_list = [i[0] for i in self.measurements_list]
             times_list = np.array([int(r["timestamp"].timestamp() * 10**6) for r in chunk],  TSDataType.INT64.np_dtype())
             data_types = [i[1] for i in self.measurements_list]
+            if len(chunk_value[0]) != len(data_types):
+                raise ValueError(f"Data length error {self.time_series_name}, chunk length: {len(chunk_value[0])}, data type {data_types}")
             values_list = [
                 np.array([l[i] for l in chunk_value], data_types[i].np_dtype()) 
                 for i, v in enumerate(self.measurements_list)
@@ -234,9 +237,9 @@ class SingleTimeSeries(IoTTimeSeriesBase):
                     TSEncoding.PLAIN, 
                     Compressor.SNAPPY
                 )
-            print(f"Created aligned time series: {self.storage_group_name}.{self.time_series_name}")
+            logging.info(f"Created aligned time series: {self.storage_group_name}.{self.time_series_name}")
         except StatementExecutionException as e:
-            print(f"Time series already exists: {self.storage_group_name}.{self.time_series_name}")
+            logging.info(f"Time series already exists: {self.storage_group_name}.{self.time_series_name}")
 
     @SessionManagement.session
     def insert_data(self, session : Session):

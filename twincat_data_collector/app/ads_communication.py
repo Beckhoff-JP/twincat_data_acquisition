@@ -1,3 +1,4 @@
+import logging
 import pyads
 import ctypes
 from dataclasses import dataclass, field
@@ -19,6 +20,8 @@ class AbstructAdsDeviceNotification(ABC):
     queue: asyncio.Queue = field(default_factory=asyncio.Queue)
     subscriber: Callable = field(default=None)
     cycle_time : int = field(default=1)
+    max_delay : int = field(default=100)
+    fixed_priod: bool = field(default_factory=bool)
     state : bool = field(default=False)
 
     def __post_init__(self):
@@ -54,8 +57,11 @@ class AdsDeviceNotificationStructure(AbstructAdsDeviceNotification):
         if isinstance(self.model, tuple) and len(self.model) > 1 and isinstance(self.model[0], tuple):
             size_of_struct = pyads.size_of_structure(self.model)
             attr = pyads.NotificationAttrib(size_of_struct)
-            attr.trans_mode = pyads.ADSTRANS_SERVERONCHA
-            attr.max_delay = 100
+            if self.fixed_priod:
+                attr.trans_mode = pyads.ADSTRANS_SERVERCYCLE
+            else:
+                attr.trans_mode = pyads.ADSTRANS_SERVERONCHA
+            attr.max_delay = self.max_delay
             attr.cycle_time = self.cycle_time
             @self.connection.notification(ctypes.c_ubyte * size_of_struct)
             def callback(handle, name, timestamp, value):
@@ -82,7 +88,7 @@ class AdsDeviceNotificationPrimitive(AbstructAdsDeviceNotification):
     def create_notification(self):
             attr = pyads.NotificationAttrib(ctypes.sizeof(self.model))
             attr.trans_mode = pyads.ADSTRANS_SERVERONCHA
-            attr.max_delay = 100
+            attr.max_delay = self.max_delay
             attr.cycle_time = self.cycle_time
 
             @self.connection.notification(self.model)
@@ -109,7 +115,7 @@ class AdsPortConnection:
     
     def __post_init__(self):
         self.publishers = list()
-        print(f"Connecting to PLC with AMS ID: {self.ams_net_id}, Port: {self.ads_port}")
+        logging.info(f"Connecting to PLC with AMS ID: {self.ams_net_id}, Port: {self.ads_port}")
         self.connection = pyads.Connection(self.ams_net_id, self.ads_port)
         self.port_open()
     
@@ -127,9 +133,9 @@ class AdsPortConnection:
             
             self.symbols = self.connection.get_all_symbols()
             #for symbol in self.symbols:
-            #    print(symbol.name, symbol.plc_type)
+            #    logging.info(symbol.name, symbol.plc_type)
             #    if symbol.is_structure:
-            #        print(f"{symbol.name} is a structure with size {symbol.struct_size}")
+            #        logging.info(f"{symbol.name} is a structure with size {symbol.struct_size}")
             
             if len(self.publishers) > 0:
                 for publisher in self.publishers:
@@ -143,7 +149,7 @@ class AdsPortConnection:
         except RuntimeError as e:
             raise AdsConnectionError(f"No route to machine. Check your network configuration. router: {self.router_address}, target : {self.ams_net_id}, target port : {self.ads_port}") from e
             
-    def reg_notification(self, symbol: str, model: T, cycle_time: int = 1, subscriber: Callable = None) -> AbstructAdsDeviceNotification:
+    def reg_notification(self, symbol: str, model: T, cycle_time: int = 1, max_delay: int = 100, fixed_priod: bool = False, subscriber: Callable = None) -> AbstructAdsDeviceNotification:
         if isinstance(model, tuple) and len(model) > 1 and isinstance(model[0], tuple):
             publisher = AdsDeviceNotificationStructure(
                     connection=self.connection,
@@ -151,7 +157,9 @@ class AdsPortConnection:
                     alive_report=self.alive_report,
                     subscriber=subscriber,
                     symbol=symbol,
-                    cycle_time=cycle_time
+                    cycle_time=cycle_time,
+                    max_delay=max_delay,
+                    fixed_priod=fixed_priod
                 )
         else:
             publisher = AdsDeviceNotificationPrimitive(
@@ -160,8 +168,11 @@ class AdsPortConnection:
                     alive_report=self.alive_report,
                     subscriber=subscriber,
                     symbol=symbol,
-                    cycle_time=cycle_time
+                    cycle_time=cycle_time,
+                    max_delay=max_delay,
+                    fixed_priod=fixed_priod
                 )
+        logging.debug(f"Notification registerd. symbol : {symbol}, cycle_time: {cycle_time}, max_delay: {max_delay}, fixed_priod: {fixed_priod}")
         self.publishers.append(publisher)
         return publisher
 
@@ -183,17 +194,17 @@ class AdsPortConnection:
         while True:
             try:
                 if not self.watchdog:
-                    print(f"Connection lost. Attempting to reconnect...")
+                    logging.info(f"Connection lost. Attempting to reconnect...")
                     await self.reconnect()
                 if self.connection.is_open:
                     module_state = self.connection.read_state()
-                    print(f"Port {self.ads_port} : ADS State {module_state[0]}, Device state : {module_state[1]}")
+                    logging.info(f"Port {self.ads_port} : ADS State {module_state[0]}, Device state : {module_state[1]}")
                     if (module_state[0] != 5 or module_state[1] != 0):
                         self.watchdog = False
                 else:
-                    print(f"Port {self.ads_port} : Could not open.")
+                    logging.info(f"Port {self.ads_port} : Could not open.")
                     self.watchdog = False
             except (pyads.pyads_ex.ADSError, AdsConnectionError) as e:
-                print(f"Port {self.ads_port} : ADSError : {e}")
+                logging.info(f"Port {self.ads_port} : ADSError : {e}")
                 self.watchdog = False
             await asyncio.sleep(10)  # Check every 10 seconds
