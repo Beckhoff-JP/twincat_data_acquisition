@@ -1,0 +1,7 @@
+enable,ams_id,ads_port,tc_datatype,twincat_symbol,storage_group_name,time_series_name,chunk_size,cycle_time,max_delay
+0,15.15.15.15.1.1,351,xts_motor_module_alarm_structure,XTS ProcessingUnit 1.Part 1.Module {module_num}.ActiveError,root.xts.motors.unit{module_num},ActiveError,100,100,1000
+0,15.15.15.15.1.1,351,xts_motor_module_alarm_structure,XTS ProcessingUnit 1.Part 1.Module {module_num}.ActiveWarning,root.xts.motors.unit{module_num},ActiveWarning,100,100,1000
+0,15.15.15.15.1.1,351,xts_motor_module_latest_message,XTS ProcessingUnit 1.Part 1.Module {module_num}.LatestMessages,root.xts.motors.unit{module_num},LatestMessage,100,100,1000
+1,15.15.15.15.1.1,351,PLCTYPE_REAL,XTS ProcessingUnit 1.Part 1.Module {module_num}.Max DC link voltage - last 500 ms,root.xts.motors.unit{module_num},MaxDCLinkVoltage,100,100,1000
+1,15.15.15.15.1.1,351,PLCTYPE_REAL,XTS ProcessingUnit 1.Part 1.Module {module_num}.Max overall current - last 500 ms,root.xts.motors.unit{module_num},MaxOverallCurrent,100,100,1000
+1,15.15.15.15.1.1,351,PLCTYPE_REAL,XTS ProcessingUnit 1.Part 1.Module {module_num}.PCB Temperatures[0],root.xts.motors.unit{module_num},PCB_temperatures_0,100,100,1000

@@ -1,3 +1,4 @@
+import logging
 import pyads
 from error_handler import AdsConnectionError
 from dataclasses import dataclass, field
@@ -6,7 +7,7 @@ from datetime import datetime
 from abc import ABC, abstractmethod
 from typing import Tuple, List, Union, TypeVar
 from ads_communication import AdsPortConnection
-from iotdb_utils import IoTTimeSeriesBase, SingleTimeSeries, MultiTimeSeries, IoTDBClientSession
+from iotdb_utils import IoTTimeSeriesBase
 import asyncio
 
 T = TypeVar('T', bound=Union[Tuple[Tuple], pyads.PLCTYPE_BOOL, pyads.PLCTYPE_BYTE, pyads.PLCTYPE_DWORD, pyads.PLCTYPE_INT, pyads.PLCTYPE_DINT, pyads.PLCTYPE_LINT, pyads.PLCTYPE_UDINT, pyads.PLCTYPE_ULINT, pyads.PLCTYPE_REAL, pyads.PLCTYPE_LREAL, pyads.PLCTYPE_STRING, pyads.PLCTYPE_WSTRING])
@@ -17,10 +18,13 @@ class EventTaskBase(ABC):
     subscriber : AdsPortConnection
     mapping_model : T
     watch_symbol : str
+    cycle_time: int = field(default=1)
+    max_delay: int = field(default=100)
+    fixed_period: bool = field(default_factory=bool)
     queue : asyncio.Queue = field(default=None)
 
     def __post_init__(self):
-        publisher = self.subscriber.reg_notification(symbol=self.watch_symbol, model=self.mapping_model)
+        publisher = self.subscriber.reg_notification(symbol=self.watch_symbol, model=self.mapping_model, cycle_time=self.cycle_time, max_delay=self.max_delay, fixed_priod=self.fixed_period)
         self.queue = publisher.queue
 
     @abstractmethod
@@ -47,7 +51,7 @@ class IoTDBRecorder(EventTaskBase):
             record["timestamp"] = record["timestamp"].astimezone(ZoneInfo("Japan"))
             if self.time_series_manager.write_data(record):
                 break
-        print(f"{self.watch_symbol} data write count : {data_count}/{self.time_series_manager.chunk_size}")
+        logging.debug(f"{self.watch_symbol} data write count : {data_count}/{self.time_series_manager.chunk_size}")
         if  self.queue.qsize() > 0:
             self.time_series_manager.chunk_size += self.queue.qsize()
         elif self.time_series_manager.chunk_size > data_count:
