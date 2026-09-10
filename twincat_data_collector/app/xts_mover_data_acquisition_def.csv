@@ -1,0 +1,13 @@
+enable,ams_id,ads_port,tc_datatype,twincat_symbol,storage_group_name,time_series_name,chunk_size,cycle_time,max_delay
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.ActHwPos,root.xts.movers.mover{mover_num},ActHwPos,5000,0,1000
+1,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.ActPos,root.xts.movers.mover{mover_num},ActPos,10000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.ActPosError,root.xts.movers.mover{mover_num},ActPosError,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.ActVelo,root.xts.movers.mover{mover_num},ActVelo,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.ActVeloError,root.xts.movers.mover{mover_num},ActVeloError,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_UINT,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.Control,root.xts.movers.mover{mover_num},Control,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.SetCurr,root.xts.movers.mover{mover_num},SetCurr,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.SetForce,root.xts.movers.mover{mover_num},SetForce,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.SetJerkItp,root.xts.movers.mover{mover_num},SetJerkltp,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.SetPosItp,root.xts.movers.mover{mover_num},SetPosltp,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,Mover Axis {mover_num}.Mover Controller {mover_num}.MoverControllerScopeVariable.SetVeloItp,root.xts.movers.mover{mover_num},SetVeloltp,5000,0,1000
+0,15.15.15.15.1.1,351,PLCTYPE_LREAL,XTS ProcessingUnit 1.Mover {mover_num}.SetAcceleration,root.xts.movers.mover{mover_num},SetAcc,5000,0,1000
