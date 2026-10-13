@@ -147,7 +147,7 @@ class AdsPortConnection:
             raise AdsConnectionError(f"Failed to open ADS connection. target : {self.ams_net_id}, target port : {self.ads_port}") from e
               
         except RuntimeError as e:
-            raise AdsConnectionError(f"No route to machine. Check your network configuration. router: {self.router_address}, target : {self.ams_net_id}, target port : {self.ads_port}") from e
+            raise AdsConnectionError(f"No route to machine. Check your network configuration. target : {self.ams_net_id}, target port : {self.ads_port}") from e
             
     def reg_notification(self, symbol: str, model: T, cycle_time: int = 1, max_delay: int = 100, fixed_priod: bool = False, subscriber: Callable = None) -> AbstructAdsDeviceNotification:
         if isinstance(model, tuple) and len(model) > 1 and isinstance(model[0], tuple):

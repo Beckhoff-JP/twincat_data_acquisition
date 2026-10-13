@@ -10,8 +10,6 @@ import csv
 
 # ADS設定
 ams_net_id = os.getenv('TARGET_AMSID', default='10.1.177.22.1.1')
-router = os.getenv('ROUTER_ADDRESS', default='127.0.0.1')
-
 
 def read_def(file) -> list:
     with open(file, newline = "") as f:
