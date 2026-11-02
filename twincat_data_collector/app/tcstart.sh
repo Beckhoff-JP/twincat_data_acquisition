@@ -8,4 +8,4 @@ set -e
 echo "Starting TcSystemServiceUm..."
 
 # Replaces the shell process with the TcSystemServiceUm process, ensuring proper signal handling
-exec /usr/bin/TcSystemServiceUm -i "${AMS_NETID}" -p /var/run/TcSystemServiceUm.pid
+exec /usr/bin/TcSystemServiceUm -i "${MY_AMSID}" -p /var/run/TcSystemServiceUm.pid
